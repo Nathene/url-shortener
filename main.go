@@ -17,7 +17,7 @@ const (
 
 func (us *URLShortener) HandleShorten(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		handleGET(w, r)
+		handleGET(us, w, r)
 		return
 	}
 	if r.Method == "POST" {
@@ -50,34 +50,45 @@ func handlePOST(us *URLShortener, w http.ResponseWriter, r *http.Request) {
 
 	us.urls[customShortKey] = originalURL
 
-	shortenedURL := fmt.Sprintf(baseURL+"%s", customShortKey)
+	//shortenedURL := fmt.Sprintf(baseURL+"%s", customShortKey)
 
-	w.Header().Set("Content-Type", "text/html")
-	responseHTML := fmt.Sprintf(`
-        <h2>URL Shortener</h2>
-        <p>Original URL: <input type="text" value="%s" readonly></p>
-        <p>Shortened URL: <input type="text" value="%s" readonly></p>
-        <form method="post" action="/shorten"> 
-            <input type="text" name="url" placeholder="Enter a URL">
-            <input type="text" name="shortkey" placeholder="Enter a short key"> 
-            <input type="submit" value="Shorten">
-        </form>
-    `, originalURL, shortenedURL)
-	fmt.Fprintf(w, responseHTML)
+	handleGET(us, w, r)
 }
 
 // handleGET will show the basic UI for shortening a url
-func handleGET(w http.ResponseWriter, r *http.Request) {
+func handleGET(us *URLShortener, w http.ResponseWriter, r *http.Request) {
 	// Display the HTML form
 	w.Header().Set("Content-Type", "text/html")
 	responseHTML := `
-		<h2>URL Shortener</h2>
-		<form method="post" action="/shorten"> 
-			<input type="text" name="url" placeholder="Enter a URL">
-			<input type="text" name="shortkey" placeholder="Enter a short key"> 
-			<input type="submit" value="Shorten">
-		</form>
-	`
+        <h2>URL Shortener</h2>
+        <form method="post" action="/shorten"> 
+            <input type="text" name="url" placeholder="Enter a URL">
+            <input type="text" name="shortkey" placeholder="go/"> 
+            <input type="submit" value="Shorten">
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Long URL</th>
+                    <th>Short URL</th> 
+                </tr>
+            </thead>
+            <tbody> 
+    `
+
+	for k, v := range us.urls {
+		responseHTML += fmt.Sprintf(`
+                <tr>
+                    <td>%s</td>
+                    <td><a href="/%s">%s</a></td> 
+                </tr>
+        `, v, k, "go/"+k) // Note: v is the long URL, k is the short key
+	}
+
+	responseHTML += `
+            </tbody>
+        </table>
+    `
 	fmt.Fprintf(w, responseHTML)
 }
 
