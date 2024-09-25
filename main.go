@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// URLShortener will store a map of short urls as keys, with the longer urls as the values.
 type URLShortener struct {
 	urls map[string]string
 }
@@ -26,6 +27,7 @@ func (us *URLShortener) HandleShorten(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "method not supported: "+r.Method, http.StatusBadRequest)
 }
 
+// handlePOST will do all checks on the urls, make sure there is no duplicates and then send the complete form.
 func handlePOST(us *URLShortener, w http.ResponseWriter, r *http.Request) {
 	originalURL := r.FormValue("url")
 
@@ -64,6 +66,7 @@ func handlePOST(us *URLShortener, w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, responseHTML)
 }
 
+// handleGET will show the basic UI for shortening a url
 func handleGET(w http.ResponseWriter, r *http.Request) {
 	// Display the HTML form
 	w.Header().Set("Content-Type", "text/html")
@@ -78,7 +81,9 @@ func handleGET(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, responseHTML)
 }
 
+// HandRedirection will use the shortened url and get the value from the map inside URLShortener
 func (us *URLShortener) HandleRedirection(w http.ResponseWriter, r *http.Request) {
+	// ignores the intitial '/'
 	shortKey := r.URL.Path[1:]
 	fmt.Println(us.urls)
 	if shortKey == "" {
@@ -99,10 +104,8 @@ func main() {
 		urls: make(map[string]string),
 	}
 
-	http.HandleFunc("/shorten", shortener.HandleShorten) // Handle shortening at root path
+	http.HandleFunc("/shorten", shortener.HandleShorten) // Handle shortening at /shorten
 	http.HandleFunc("/", shortener.HandleRedirection)
 
-	fmt.Println("URL shortener is running on " + port)
-	fmt.Println(baseURL + "shorten")
 	http.ListenAndServe(port, nil)
 }
